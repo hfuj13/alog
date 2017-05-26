@@ -1,2 +1,2 @@
-# hflog
-logger
+# alog
+a little log

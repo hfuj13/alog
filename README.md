@@ -1,2 +1,2 @@
 # alog
-a little log
+A little LOGger

@@ -4,9 +4,10 @@
 
 #include <ostream>
 #include <string>
+#include <thread>
+
 #include <cassert>
 #include <cstdlib>
-#include <pthread.h>
 
 namespace hf {
 
@@ -18,7 +19,7 @@ inline std::string now_timestamp()
   return "[1999-06-06T06:06:06.666]";
 }
 
-class alog /* final */ {
+class alog final {
 public:
   enum level_t {
     UNDER_LVL = 0,
@@ -108,12 +109,12 @@ private:
 
   std::ostream& operator()()
   {
-    return (*this) << now_timestamp() << "[thd:" << pthread_self() << "] ";
+    return (*this) << now_timestamp() << "[thd:" << std::this_thread::get_id() << "] ";
   }
   std::ostream& operator()(level_t lvl)
   {
     if (lvl >= level_) {
-      return (*this) << now_timestamp() << "[thd:" << pthread_self() << "] ";
+      return (*this) << now_timestamp() << "[thd:" << std::this_thread::get_id() << "] ";
     }
     else {
       return null_ost_;

@@ -95,14 +95,8 @@ TEST(alog, logoutput)
   std::ostream& ost = cout;
   {
     alog& log = alog::get_instance(ost);
-    log.t() << "@@@@ TEST @@@@" << endl;
-    SUCCEED();
-  }
-  {
-    alog& log = alog::get_instance(ost);
     log.force() << "====\n";
     log.level(alog::VERBOSE);
-    log.t() << "@@@@ TEST @@@@" << endl;
     log.v() << "@@@@ verbose @@@@" << endl;
     log.d() << "@@@@ debug @@@@" << endl;
     log.i() << "@@@@ info @@@@" << endl;
@@ -163,6 +157,23 @@ TEST(alog, logoutput)
     log.i() << "@@@@ info @@@@" << endl;
     log.w() << "@@@@ warning @@@@" << endl;
     log.e() << "@@@@ error @@@@" << endl;
+    SUCCEED();
+  }
+}
+
+TEST(alog, format)
+{
+  std::ostream& ost = cout;
+  {
+    alog& log = alog::get_instance(ost);
+    log.force() << "====\n";
+    log.level(alog::VERBOSE);
+    log.v("%s %d%s", "[verbose", 10, "]") << endl;
+    log.v("[verbose 20]") << endl;
+//    log.d() << "@@@@ debug @@@@" << endl;
+//    log.i() << "@@@@ info @@@@" << endl;
+//    log.w() << "@@@@ warning @@@@" << endl;
+//    log.e() << "@@@@ error @@@@" << endl;
     SUCCEED();
   }
 }

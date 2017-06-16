@@ -2,22 +2,60 @@
 
 #pragma once
 
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+
+#include <chrono>
 #include <iomanip>
 #include <ostream>
 #include <string>
 #include <thread>
 
-#include <cassert>
-#include <cstdio>
-#include <cstdlib>
-
 namespace hf {
 
 /// C++14 later
 
+/// @brief get now timestamp. UTC only yet
+///
+/// @param [in] parenthesis: ture: output with '[' and ']' <br>
+//      false : output with raw
+/// @retval string transformed timestamp (e.g. [2016-12-11T13:24:13.058] or 2016-12-11T13:24:13.058 etc.). the output format is like the ISO8601 (that is it include milliseconds)
 inline std::string now_timestamp()
 {
-  return "[1999-06-06T06:06:06.666]";
+  std::chrono::time_point<std::chrono::system_clock> tp = std::chrono::system_clock::now();
+  //std::chrono::nanoseconds nsec_since_epoch = std::chrono::duration_cast<std::chrono::nanoseconds>(tp.time_since_epoch());
+  std::chrono::milliseconds msec_since_epoch = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch());
+  //std::chrono::milliseconds msec_since_epoch = std::chrono::duration_cast<std::chrono::milliseconds>(nsec_since_epoch);
+  std::chrono::seconds sec = std::chrono::duration_cast<std::chrono::seconds>(msec_since_epoch);
+
+  std::time_t tt = sec.count();
+  std::size_t msec = msec_since_epoch.count() % 1000;
+  //std::size_t nsec = nsec_since_epoch.count() % (1000 * 1000); 
+
+  struct tm stm = {0};
+  tzset();
+  gmtime_r(&tt, &stm);
+
+  std::ostringstream oss;
+
+  oss << (stm.tm_year+1900) << '-'
+      << std::setw(2) << std::setfill('0') << (stm.tm_mon+1) << '-'
+      << std::setw(2) << std::setfill('0') << stm.tm_mday
+      << 'T'
+      << std::setw(2) << std::setfill('0') << stm.tm_hour
+      << ':'
+      << std::setw(2) << std::setfill('0') << stm.tm_min
+      << ':'
+      << std::setw(2) << std::setfill('0') << stm.tm_sec
+      << '.' << std::setw(3) << std::setfill('0') << msec
+      //<< std::setw(3) << std::setfill('0') << nsec
+      ;
+
+  std::string str;
+  str += "[" + oss.str() + "]";
+
+  return str;
 }
 
 class alog final {

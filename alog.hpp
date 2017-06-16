@@ -14,7 +14,6 @@
 namespace hf {
 
 /// C++14 later
-/// Linux
 
 inline std::string now_timestamp()
 {
@@ -150,18 +149,18 @@ private:
   alog() = default;
   alog& operator=(const alog&) = delete;
 
-  std::ostream& operator()()
+  std::ostream& output()
   {
     return (*ost_) << now_timestamp() << "[thd:" << std::this_thread::get_id() << "] ";
   }
+
+  std::ostream& operator()()
+  {
+    return output();
+  }
   std::ostream& operator()(level_t lvl)
   {
-    if (lvl >= level_) {
-      return (*ost_) << now_timestamp() << "[thd:" << std::this_thread::get_id() << "] ";
-    }
-    else {
-      return null_ost_;
-    }
+    return lvl >= level_ ? output() : null_ost_;
   }
 
   static alog& get_instance(std::ostream* ost)

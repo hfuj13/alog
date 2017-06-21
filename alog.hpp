@@ -30,7 +30,7 @@ inline std::string now_timestamp()
   std::chrono::seconds sec = std::chrono::duration_cast<std::chrono::seconds>(msec_since_epoch);
 
   std::time_t tt = sec.count();
-  std::size_t msec = msec_since_epoch.count() % 1000;
+  std::size_t msec_part = msec_since_epoch.count() % 1000;
   //std::size_t nsec = nsec_since_epoch.count() % (1000 * 1000); 
 
   struct tm stm = {0};
@@ -48,7 +48,7 @@ inline std::string now_timestamp()
       << std::setw(2) << std::setfill('0') << stm.tm_min
       << ':'
       << std::setw(2) << std::setfill('0') << stm.tm_sec
-      << '.' << std::setw(3) << std::setfill('0') << msec
+      << '.' << std::setw(3) << std::setfill('0') << msec_part
       //<< std::setw(3) << std::setfill('0') << nsec
       ;
 
@@ -71,15 +71,54 @@ public:
     OVER_LVL
   };
 
-  static alog& get_instance()
-  {
-    return get_instance(nullptr);
-  }
-  static alog& get_instance(std::ostream& ost)
-  {
-    return get_instance(&ost);
-  }
+//  class scoped final {
+//  public:
+//    scoped() = delete;
+//    scoped(const scoped&) = default;
+//    scoped(scoped&&) = default;
+//
+//    scoped(const std::string& str)
+//    : scoped(level_t::DEBUG, str) {}
+//    scoped(level_t loglevel, const std::string& str)
+//    : loglevel_(loglevel), oss_(str)
+//    {
+//      log_(loglevel_) << "[[[[ " << oss_.str() << std::endl;
+//    }
+//    ~scoped()
+//    {
+//      log_(loglevel_) << "]]]] " << oss_.str() << std::endl;
+//    }
+//    std::string str()
+//    {
+//      return oss_.str();
+//    }
+//    scoped& clear()
+//    {
+//      oss_.str("");
+//      return *this;
+//    }
+//    template<typename T> friend std::ostream& operator<<(scoped& slog, const T& rhs);
+//  private:
+//    alog& log_;
+//    level_t loglevel_ = level_t::DEBUG;
+//    std::ostringstream oss_;
+//  };
 
+  alog() = default;
+  alog(const alog&) = default;
+  alog(alog&&) = default;
+  alog(std::ostream& ost)
+  {
+    ost_ = &ost;
+  }
+  ~alog() = default;
+
+  alog& operator=(const alog&) = default;
+  alog& operator=(alog&&) = default;
+  std::ostream& operator()(level_t lvl)
+  {
+    return lvl >= level_ ? output() : null_ost_;
+  }
   bool operator==(const alog& rhs) const
   {
     return &rhs == this || (rhs.level_ == level_ && rhs.ost_ == ost_);
@@ -88,6 +127,8 @@ public:
   {
     return (rhs.level_ != level_ || rhs.ost_ != ost_);
   }
+
+
   template<typename... Args> static std::string format(const std::string& fmt, Args... args)
   {
     constexpr int capacity = 512;
@@ -183,10 +224,8 @@ public:
     return level_;
   }
 
+  friend class alog_single;
 private:
-  alog() = default;
-  alog& operator=(const alog&) = delete;
-
   std::ostream& output()
   {
     return (*ost_) << now_timestamp() << "[thd:" << std::this_thread::get_id() << "] ";
@@ -196,28 +235,69 @@ private:
   {
     return output();
   }
-  std::ostream& operator()(level_t lvl)
-  {
-    return lvl >= level_ ? output() : null_ost_;
-  }
-
-  static alog& get_instance(std::ostream* ost)
-  {
-    static alog log;
-    if (ost != nullptr) {
-      log.ost_ = ost;
-    }
-    return log;
-  }
 
   std::ostream null_ost_{nullptr}; // /dev/null like ostream
   level_t level_ = level_t::SILENT;
   std::ostream* ost_ = &null_ost_;
 };
 
-template<typename T> std::ostream& operator<<(alog& log, const T& rhs)
+template<typename T> inline std::ostream& operator<<(alog& log, const T& rhs)
 {
   return (*log.ost_) << rhs;
 }
+
+//template<typename T> std::ostream& operator<<(alog::scoped& slog, const T& rhs)
+//{
+//  return slog.oss_ << rhs;
+//}
+
+#if 0
+template<typename T = alog>
+class alog_singleton final {
+public:
+  alog_singleton() = delete;
+  alog_singleton(const alog_singleton&) = delete;
+  alog_singleton(alog_singleton&&) = delete;
+  alog_singleton& operator=(const alog_singleton&) = delete;
+  alog_singleton& operator=(alog_singleton&&) = delete;
+  static alog& get_instance()
+  {
+    static_assert(std::is_base_of<alog, T>::value, "T is invalid. T must be the alog class.");
+    static std::ostream null_ost{nullptr}; // /dev/null like ostream
+    return get_instance(null_ost);
+  }
+
+  static alog& get_instance(std::ostream& ost)
+  {
+    static alog log;
+    log.ost_ = &ost;
+    return log;
+  }
+
+private:
+};
+using alog_single = alog_singleton<alog>;
+#else
+class alog_single final {
+public:
+  alog_single() = delete;
+  alog_single(const alog_single&) = delete;
+  alog_single(alog_single&&) = delete;
+  alog_single& operator=(const alog_single&) = delete;
+  alog_single& operator=(alog_single&&) = delete;
+  static alog& get_instance()
+  {
+    static std::ostream null_ost{nullptr}; // /dev/null like ostream
+    return get_instance(null_ost);
+  }
+
+  static alog& get_instance(std::ostream& ost)
+  {
+    static alog log;
+    log.ost_ = &ost;
+    return log;
+  }
+};
+#endif
 
 } // namespace hf

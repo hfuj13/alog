@@ -11,6 +11,7 @@ add_executable(
   altest
   src/gtest-all.cc
   main.cc
-  alog_test.cc
+  alog_test1.cc
+  alog_test2.cc
 )
 target_link_libraries(altest pthread)

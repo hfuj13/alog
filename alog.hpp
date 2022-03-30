@@ -7,10 +7,11 @@
 #include <cstdlib>
 
 #include <chrono>
-#include <iomanip>
 #include <ostream>
 #include <string>
 #include <thread>
+
+#include <format.hpp>
 
 namespace hf {
 
@@ -37,23 +38,14 @@ inline std::string now_timestamp()
   tzset();
   gmtime_r(&tt, &stm);
 
-  std::ostringstream oss;
-
-  oss << (stm.tm_year+1900) << '-'
-      << std::setw(2) << std::setfill('0') << (stm.tm_mon+1) << '-'
-      << std::setw(2) << std::setfill('0') << stm.tm_mday
-      << 'T'
-      << std::setw(2) << std::setfill('0') << stm.tm_hour
-      << ':'
-      << std::setw(2) << std::setfill('0') << stm.tm_min
-      << ':'
-      << std::setw(2) << std::setfill('0') << stm.tm_sec
-      << '.' << std::setw(3) << std::setfill('0') << msec_part
-      //<< std::setw(3) << std::setfill('0') << nsec
-      ;
-
+  std::string timestamp = format("%04d-%02d-%02dT%02d:%02d:%02d.%03d"
+      , stm.tm_year + 1900, stm.tm_mon + 1, stm.tm_mday
+      , stm.tm_hour, stm.tm_min, stm.tm_sec, msec_part
+      );
   std::string str;
-  str += "[" + oss.str() + "]";
+  str += "[";
+  str += timestamp;
+  str += "]";
 
   return str;
 }
@@ -126,25 +118,6 @@ public:
   bool operator!=(const alog& rhs) const
   {
     return (rhs.level_ != level_ || rhs.ost_ != ost_);
-  }
-
-
-  template<typename... Args> static std::string format(const std::string& fmt, Args... args)
-  {
-    constexpr int capacity = 512;
-    std::string buff(capacity, '\0');
-
-    int ret = snprintf(&buff[0], buff.capacity(), fmt.c_str(), args...);
-    if (ret > capacity) {
-      buff.reserve(ret);
-      ret = snprintf(&buff[0], buff.capacity(), fmt.c_str(), args...);
-    }
-    else if (ret < 0) {
-      abort();
-    }
-    std::string str(buff.c_str());
-    return str;
-
   }
 
   // for verbose
@@ -225,6 +198,7 @@ public:
   }
 
   friend class alog_single;
+
 private:
   std::ostream& output()
   {

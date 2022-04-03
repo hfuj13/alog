@@ -1,12 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
-SET(CMAKE_CXX_COMPILER /usr/bin/g++)
-#SET(CMAKE_CXX_COMPILER /usr/bin/clang++)
-#SET(CMAKE_CXX_COMPILER /usr/bin/clang++-3.8)
-add_definitions("-g -Wall -std=c++14 -pthread")
-include_directories(..)
-include_directories(.)
-include_directories(include)
+project(altest CXX)
 
+#add_library(pthread)
 add_executable(
   altest
   src/gtest-all.cc
@@ -14,4 +9,12 @@ add_executable(
   alog_test1.cc
   alog_test2.cc
 )
+target_include_directories(
+  altest PUBLIC
+  ./include
+  .
+  ..
+)
 target_link_libraries(altest pthread)
+target_compile_options(altest PUBLIC -Wall)
+target_compile_features(altest PUBLIC cxx_std_14)

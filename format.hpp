@@ -8,18 +8,16 @@ namespace hf {
 
 template<typename... Args> inline std::string format(const std::string& fmt, Args... args)
 {
-  constexpr int capacity = 512;
-  std::string buff(capacity, '\0');
-
+  std::string buff;
   int ret = std::snprintf(&buff[0], buff.capacity(), fmt.c_str(), args...);
-  if (ret > capacity) {
-    buff.reserve(ret);
+  if (ret >= buff.capacity()) {
+    buff.reserve(ret+1);
     ret = std::snprintf(&buff[0], buff.capacity(), fmt.c_str(), args...);
   }
   else if (ret < 0) {
     std::abort();
   }
-  return buff;
+  return buff.c_str();
 }
 
 } // namespace hf
